@@ -1,0 +1,167 @@
+{
+  "bookshelf": [
+    {
+      "id": "Physics|Khan Academy Physics",
+      "title": "Khan Academy Physics",
+      "url": "https://www.khanacademy.org/science/physics",
+      "category": "Physics",
+      "description": "Physics courses on mechanics, electricity, magnetism, and quantum physics."
+    },
+    {
+      "id": "Physics|MIT OpenCourseWare Physics",
+      "title": "MIT OpenCourseWare Physics",
+      "url": "https://ocw.mit.edu/courses/physics/",
+      "category": "Physics",
+      "description": "Free physics course materials from MIT."
+    },
+    {
+      "id": "Physics|Physics Classroom",
+      "title": "Physics Classroom",
+      "url": "https://www.physicsclassroom.com",
+      "category": "Physics",
+      "description": "Physics tutorials and lessons."
+    }
+  ],
+  "resource_tags": {},
+  "fishing_stats": {
+    "casts": 67,
+    "total_weight": 1069,
+    "best_catches": [
+      [
+        "Ancient Sturgeon",
+        38
+      ],
+      [
+        "Swordfish",
+        38
+      ],
+      [
+        "Shark",
+        37
+      ],
+      [
+        "Swordfish",
+        36
+      ],
+      [
+        "Tuna",
+        32
+      ],
+      [
+        "Tuna",
+        31
+      ],
+      [
+        "Catfish",
+        30
+      ],
+      [
+        "Pike",
+        29
+      ],
+      [
+        "Catfish",
+        27
+      ],
+      [
+        "Salmon",
+        25
+      ]
+    ],
+    "achievements": [
+      "Beast Mode",
+      "Big Game Fishing",
+      "First Cast",
+      "Fishing Veteran",
+      "Heavy Hitter",
+      "Skill Master",
+      "Tenacious Angler"
+    ],
+    "achievement_log": [
+      {
+        "time": "2026-03-13 17:24:53",
+        "name": "Fishing Veteran",
+        "desc": "50 casts down. Your reflexes and patience are improving."
+      },
+      {
+        "time": "2026-03-13 17:24:52",
+        "name": "Beast Mode",
+        "desc": "A single catch over 20 lbs! You\u2019re getting strong."
+      },
+      {
+        "time": "2026-03-13 17:24:37",
+        "name": "Skill Master",
+        "desc": "Your skill tree is impressive\u2014your techniques are refined."
+      },
+      {
+        "time": "2026-03-13 17:24:35",
+        "name": "Heavy Hitter",
+        "desc": "You've pulled in a total of 100+ lbs of fish. That's a hefty haul!"
+      },
+      {
+        "time": "2026-03-13 17:24:34",
+        "name": "Tenacious Angler",
+        "desc": "You've cast 10 times. Keep going; greatness is waiting in the deep!"
+      },
+      {
+        "time": "2026-03-13 17:24:31",
+        "name": "Big Game Fishing",
+        "desc": "You landed a big-game fish. Trophy season!"
+      },
+      {
+        "time": "2026-03-13 17:24:31",
+        "name": "First Cast",
+        "desc": "You made your first cast\u2014now the real fishing begins!"
+      }
+    ],
+    "notifications": [
+      {
+        "time": "2026-03-13 17:26:58",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:26:57",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:26:57",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:26:57",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:26:57",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:26:57",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:26:57",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:26:56",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:24:57",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      },
+      {
+        "time": "2026-03-13 17:24:56",
+        "message": "Skill gain boosted by +5 (high-tier branch)."
+      }
+    ],
+    "skill_tree": {
+      "unspent_points": 182,
+      "Luck": 25,
+      "Strength": 12,
+      "Technique": 0,
+      "Patience": 0
+    }
+  }
+}
