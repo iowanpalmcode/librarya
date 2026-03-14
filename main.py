@@ -11,6 +11,10 @@ from trivia_questions import questions
 # Persist library state (bookshelf + tags) to disk so it survives restarts.
 STATE_PATH = os.path.join(os.path.dirname(__file__), "library_state.json")
 
+# Local persistence paths (per user, not synced)
+BOOKSHELF_PATH = os.path.join(os.path.expanduser("~"), ".library_bookshelf.json")
+FISHING_PATH = os.path.join(os.path.expanduser("~"), ".library_fishing.json")
+
 def _load_library_state():
     if os.path.exists(STATE_PATH):
         try:
@@ -22,12 +26,71 @@ def _load_library_state():
 
 def save_library_state():
     state = {
-        "bookshelf": st.session_state.get("bookshelf", []),
         "resource_tags": st.session_state.get("resource_tags", {}),
     }
     try:
         with open(STATE_PATH, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
+    except Exception:
+        pass
+
+def _load_bookshelf():
+    if os.path.exists(BOOKSHELF_PATH):
+        try:
+            with open(BOOKSHELF_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_bookshelf():
+    try:
+        with open(BOOKSHELF_PATH, "w", encoding="utf-8") as f:
+            json.dump(st.session_state.get("bookshelf", []), f, indent=2)
+    except Exception:
+        pass
+
+def _load_fishing_stats():
+    if os.path.exists(FISHING_PATH):
+        try:
+            with open(FISHING_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {
+                "casts": 0,
+                "total_weight": 0,
+                "best_catches": [],
+                "achievements": [],
+                "achievement_log": [],
+                "notifications": [],
+                "skill_tree": {
+                    "unspent_points": 0,
+                    "Luck": 0,
+                    "Strength": 0,
+                    "Technique": 0,
+                    "Patience": 0,
+                },
+            }
+    return {
+        "casts": 0,
+        "total_weight": 0,
+        "best_catches": [],
+        "achievements": [],
+        "achievement_log": [],
+        "notifications": [],
+        "skill_tree": {
+            "unspent_points": 0,
+            "Luck": 0,
+            "Strength": 0,
+            "Technique": 0,
+            "Patience": 0,
+        },
+    }
+
+def save_fishing_stats():
+    try:
+        with open(FISHING_PATH, "w", encoding="utf-8") as f:
+            json.dump(st.session_state.get("fishing_stats", {}), f, indent=2)
     except Exception:
         pass
 
@@ -61,25 +124,11 @@ if 'page' not in st.session_state:
 if 'selected_category' not in st.session_state:
     st.session_state.selected_category = 'All'
 if 'bookshelf' not in st.session_state:
-    st.session_state.bookshelf = _saved.get('bookshelf', [])
+    st.session_state.bookshelf = _load_bookshelf()
 if 'resource_tags' not in st.session_state:
     st.session_state.resource_tags = _saved.get('resource_tags', {})
 if 'fishing_stats' not in st.session_state:
-    st.session_state.fishing_stats = {
-        "casts": 0,
-        "total_weight": 0,
-        "best_catches": [],
-        "achievements": [],
-        "achievement_log": [],
-        "notifications": [],
-        "skill_tree": {
-            "unspent_points": 0,
-            "Luck": 0,
-            "Strength": 0,
-            "Technique": 0,
-            "Patience": 0,
-        },
-    }
+    st.session_state.fishing_stats = _load_fishing_stats()
 
 # Sidebar navigation
 st.sidebar.title("Navigation")
@@ -104,7 +153,6 @@ if st.session_state.page == 'welcome':
     if st.button("Enter the Library"):
         st.session_state.selected_category = selected
         st.session_state.page = 'library'
-        st.rerun()
     st.markdown("Made in a day by Felix O.. check out some of my other projects @iowanpalmcode <--- Github btw")
 elif st.session_state.page == 'library':
     st.title("📚 Digital Learning Library")
@@ -164,8 +212,7 @@ elif st.session_state.page == 'library':
                 if is_fav:
                     if st.button("⭐ Remove from Bookshelf", key=f"rm_{res_id}"):
                         st.session_state.bookshelf = [b for b in st.session_state.bookshelf if b['id'] != res_id]
-                        save_library_state()
-                        st.rerun()
+                        save_bookshelf()
                 else:
                     if st.button("⭐ Add to Bookshelf", key=f"add_{res_id}"):
                         st.session_state.bookshelf.append({
@@ -175,8 +222,7 @@ elif st.session_state.page == 'library':
                             "category": res['category'],
                             "description": res['description']
                         })
-                        save_library_state()
-                        st.rerun()
+                        save_bookshelf()
 
                 # Tagging
                 current_tags = st.session_state.resource_tags.get(res_id, [])
@@ -190,7 +236,6 @@ elif st.session_state.page == 'library':
                         tags.add(new_tag.strip())
                         st.session_state.resource_tags[res_id] = sorted(tags)
                         save_library_state()
-                        st.rerun()
 
                 st.link_button("Read More", res['url'], use_container_width=True)
                 st.divider()
@@ -378,70 +423,72 @@ elif st.session_state.page == 'relax':
         "Mythic": 1,
     }
 
-    if st.button("Cast Line"):
-        # Earn skill points each cast; high-tier branches give multipliers
-        max_branch_level = max(luck, strength, technique, patience)
-        bonus_points = max(0, max_branch_level // 5)
-        skill_tree["unspent_points"] = skill_tree.get("unspent_points", 0) + 1 + bonus_points
-        if bonus_points > 0:
-            log_notification(f"Skill gain boosted by +{bonus_points} (high-tier branch).")
+    with st.form("cast_form"):
+        cast_submitted = st.form_submit_button("Cast Line")
+        if cast_submitted:
+            # Earn skill points each cast; high-tier branches give multipliers
+            max_branch_level = max(luck, strength, technique, patience)
+            bonus_points = max(0, max_branch_level // 5)
+            skill_tree["unspent_points"] = skill_tree.get("unspent_points", 0) + 1 + bonus_points
+            if bonus_points > 0:
+                log_notification(f"Skill gain boosted by +{bonus_points} (high-tier branch).")
 
-        # Determine fish selection weights
-        raw_weights = []
-        for fish in fish_pool:
-            rarity_weight = rarity_base_weights.get(fish["rarity"], 1)
-            luck_factor = 1 + (luck * 0.07)
-            level_factor = 1 + (level * 0.02)
-            raw_weights.append(rarity_weight * luck_factor * level_factor)
+            # Determine fish selection weights
+            raw_weights = []
+            for fish in fish_pool:
+                rarity_weight = rarity_base_weights.get(fish["rarity"], 1)
+                luck_factor = 1 + (luck * 0.07)
+                level_factor = 1 + (level * 0.02)
+                raw_weights.append(rarity_weight * luck_factor * level_factor)
 
-        chosen = random.choices(fish_pool, weights=raw_weights, k=1)[0]
-        catch = chosen["name"]
+            chosen = random.choices(fish_pool, weights=raw_weights, k=1)[0]
+            catch = chosen["name"]
 
-        # Apply strength and technique to weight range
-        min_w = chosen["min"] + strength + (level // 3)
-        max_w = chosen["max"] + strength + technique + (level // 2)
+            # Apply strength and technique to weight range
+            min_w = chosen["min"] + strength + (level // 3)
+            max_w = chosen["max"] + strength + technique + (level // 2)
 
-        # Technique improves consistency and biases toward the higher end
-        if technique >= 3:
-            min_w = int(min_w + (max_w - min_w) * 0.15)
-        if technique >= 6:
-            min_w = int(min_w + (max_w - min_w) * 0.20)
+            # Technique improves consistency and biases toward the higher end
+            if technique >= 3:
+                min_w = int(min_w + (max_w - min_w) * 0.15)
+            if technique >= 6:
+                min_w = int(min_w + (max_w - min_w) * 0.20)
 
-        # Base weight
-        weight = random.randint(min_w, max_w)
+            # Base weight
+            weight = random.randint(min_w, max_w)
 
-        # Luck: chance for a lucky strike (bonus weight)
-        if luck >= 2 and random.random() < min(0.10, luck * 0.02):
-            bonus = int(weight * 0.25)
-            weight += bonus
-            st.info("🍀 Lucky strike! Your catch weighed more than expected.")
+            # Luck: chance for a lucky strike (bonus weight)
+            if luck >= 2 and random.random() < min(0.10, luck * 0.02):
+                bonus = int(weight * 0.25)
+                weight += bonus
+                st.info("🍀 Lucky strike! Your catch weighed more than expected.")
 
-        # Patience: chance for an extra skill point
-        if random.random() < min(0.15, 0.02 + patience * 0.03):
-            skill_tree["unspent_points"] += 1
-            st.info("Your patience paid off! You earned an extra skill point.")
+            # Patience: chance for an extra skill point
+            if random.random() < min(0.15, 0.02 + patience * 0.03):
+                skill_tree["unspent_points"] += 1
+                st.info("Your patience paid off! You earned an extra skill point.")
 
-        st.session_state.last_catch = (catch, weight)
-        casts += 1
-        total_weight += weight
+            st.session_state.last_catch = (catch, weight)
+            casts += 1
+            total_weight += weight
 
-        # Track leaderboard (top catches)
-        best_catches.append((catch, weight))
-        best_catches = sorted(best_catches, key=lambda x: x[1], reverse=True)[:10]
+            # Track leaderboard (top catches)
+            best_catches.append((catch, weight))
+            best_catches = sorted(best_catches, key=lambda x: x[1], reverse=True)[:10]
 
-        check_achievements(catch, weight)
+            check_achievements(catch, weight)
 
-        stats.update({
-            "casts": casts,
-            "total_weight": total_weight,
-            "best_catches": best_catches,
-            "achievements": sorted(achievements),
-            "achievement_log": achievement_log,
-            "notifications": notifications,
-            "skill_tree": skill_tree,
-        })
-        st.session_state.fishing_stats = stats
-        save_library_state()
+            stats.update({
+                "casts": casts,
+                "total_weight": total_weight,
+                "best_catches": best_catches,
+                "achievements": sorted(achievements),
+                "achievement_log": achievement_log,
+                "notifications": notifications,
+                "skill_tree": skill_tree,
+            })
+            st.session_state.fishing_stats = stats
+            save_fishing_stats()
 
     # Display last catch
     if st.session_state.get("last_catch"):
@@ -478,8 +525,7 @@ elif st.session_state.page == 'relax':
             with cols[idx]:
                 level_val = skill_tree.get(branch, 0)
                 st.write(f"**{branch}**: {level_val}")
-                if unspent > 0:
-                    if st.button(f"Invest in {branch}", key=f"invest_{branch}"):
+                if st.button(f"Invest in {branch}", key=f"invest_{branch}"):
                         invest_amount = min(points_to_invest, skill_tree.get("unspent_points", 0))
                         if invest_amount > 0:
                             skill_tree[branch] = skill_tree.get(branch, 0) + invest_amount
@@ -487,8 +533,7 @@ elif st.session_state.page == 'relax':
                             log_notification(f"Invested {invest_amount} point(s) into {branch}.")
                             stats["skill_tree"] = skill_tree
                             st.session_state.fishing_stats = stats
-                            save_library_state()
-                            st.rerun()
+                            save_fishing_stats()
 
                 # Show tiered skill perks
                 perks = skill_perks.get(branch, [])
@@ -577,14 +622,12 @@ elif st.session_state.page == 'bookshelf':
                 st.write(book['description'])
                 if st.button("Remove", key=f"remove_{book['id']}"):
                     st.session_state.bookshelf = [b for b in st.session_state.bookshelf if b['id'] != book['id']]
-                    save_library_state()
-                    st.rerun()
+                    save_bookshelf()
                 st.link_button("Open Link", book['url'], use_container_width=True)
 
         if st.button("Clear Bookshelf"):
             st.session_state.bookshelf = []
-            save_library_state()
-            st.rerun()
+            save_bookshelf()
 
 elif st.session_state.page == 'trivia':
     st.title("🧠 Learning Trivia")
@@ -629,32 +672,25 @@ elif st.session_state.page == 'trivia':
 
     if st.session_state.trivia_question:
         st.write(st.session_state.trivia_question["q"])
-        st.session_state.trivia_answer = st.radio(
-            "Choose an answer:",
-            st.session_state.trivia_question["options"],
-            key="trivia_choice"
-        )
-
-        if st.button("Submit Answer"):
-            correct = st.session_state.trivia_question["a"]
-            st.session_state.trivia_total_answered += 1
-            if st.session_state.trivia_answer == correct:
-                st.session_state.trivia_correct += 1
-                st.success("Correct! Great job.")
-            else:
-                st.session_state.trivia_wrong += 1
-                st.error(f"Not quite — the correct answer was: {correct}.")
-            
-            # Brief pause to show the result
-            time.sleep(1)
-            
-            # Automatically load a new question
-            if st.session_state.shuffled_questions:
-                st.session_state.trivia_question = st.session_state.shuffled_questions.pop(0)
-            else:
-                # Reshuffle when all questions are done
-                st.session_state.shuffled_questions = questions.copy()
-                random.shuffle(st.session_state.shuffled_questions)
-                st.session_state.trivia_question = st.session_state.shuffled_questions.pop(0)
-            st.session_state.trivia_answer = None
-            st.session_state.trivia_result = None
+        with st.form("trivia_form"):
+            st.session_state.trivia_answer = st.radio(
+                "Choose an answer:",
+                st.session_state.trivia_question["options"],
+                key="trivia_choice"
+            )
+            submitted = st.form_submit_button("Submit Answer")
+            if submitted:
+                correct = st.session_state.trivia_question["a"]
+                st.session_state.trivia_total_answered += 1
+                if st.session_state.trivia_answer == correct:
+                    st.session_state.trivia_correct += 1
+                    st.success("Correct! Great job.")
+                else:
+                    st.session_state.trivia_wrong += 1
+                    st.error(f"Not quite — the correct answer was: {correct}.")
+                
+                # Automatically load next question
+                st.session_state.trivia_question = None
+                st.session_state.trivia_answer = None
+                st.session_state.trivia_result = None
+                st.rerun()
