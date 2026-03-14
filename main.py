@@ -23,7 +23,6 @@ def save_library_state():
     state = {
         "bookshelf": st.session_state.get("bookshelf", []),
         "resource_tags": st.session_state.get("resource_tags", {}),
-        "fishing_stats": st.session_state.get("fishing_stats", {}),
     }
     try:
         with open(STATE_PATH, "w", encoding="utf-8") as f:
@@ -65,7 +64,7 @@ if 'bookshelf' not in st.session_state:
 if 'resource_tags' not in st.session_state:
     st.session_state.resource_tags = _saved.get('resource_tags', {})
 if 'fishing_stats' not in st.session_state:
-    st.session_state.fishing_stats = _saved.get('fishing_stats', {
+    st.session_state.fishing_stats = {
         "casts": 0,
         "total_weight": 0,
         "best_catches": [],
@@ -79,7 +78,7 @@ if 'fishing_stats' not in st.session_state:
             "Technique": 0,
             "Patience": 0,
         },
-    })
+    }
 
 # Sidebar navigation
 st.sidebar.title("Navigation")
