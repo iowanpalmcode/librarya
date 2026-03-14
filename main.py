@@ -2,6 +2,7 @@ import json
 import os
 import random
 import streamlit as st
+import time
 
 from base_resources import base_resources
 from trivia_questions import questions
@@ -643,3 +644,17 @@ elif st.session_state.page == 'trivia':
             else:
                 st.session_state.trivia_wrong += 1
                 st.error(f"Not quite — the correct answer was: {correct}.")
+            
+            # Brief pause to show the result
+            time.sleep(1)
+            
+            # Automatically load a new question
+            if st.session_state.shuffled_questions:
+                st.session_state.trivia_question = st.session_state.shuffled_questions.pop(0)
+            else:
+                # Reshuffle when all questions are done
+                st.session_state.shuffled_questions = questions.copy()
+                random.shuffle(st.session_state.shuffled_questions)
+                st.session_state.trivia_question = st.session_state.shuffled_questions.pop(0)
+            st.session_state.trivia_answer = None
+            st.session_state.trivia_result = None
