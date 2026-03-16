@@ -44,11 +44,6 @@ def _load_bookshelf():
     return []
 
 def save_bookshelf():
-    """try:
-        with open(BOOKSHELF_PATH, "w", encoding="utf-8") as f:
-            json.dump(st.session_state.get("bookshelf", []), f, indent=2)
-    except Exception:
-        pass"""
     pass
 
 def _load_fishing_stats():
@@ -90,11 +85,6 @@ def _load_fishing_stats():
 
 def save_fishing_stats():
     pass
-    """try:
-        with open(FISHING_PATH, "w", encoding="utf-8") as f:
-            json.dump(st.session_state.get("fishing_stats", {}), f, indent=2)
-    except Exception:
-        pass"""
 
 # Ensure each major/category has at least 7 resources by adding filler links.
 # This keeps the library feeling full even when we have lots of categories.
@@ -126,12 +116,10 @@ if 'page' not in st.session_state:
 if 'selected_category' not in st.session_state:
     st.session_state.selected_category = 'All'
 if 'bookshelf' not in st.session_state:
-    """st.session_state.bookshelf = _load_bookshelf()"""
     st.session_state.bookshelf = []
 if 'resource_tags' not in st.session_state:
     st.session_state.resource_tags = _saved.get('resource_tags', {})
 if 'fishing_stats' not in st.session_state:
-    """st.session_state.fishing_stats = _load_fishing_stats()"""
     st.session_state.fishing_stats = {
         "casts": 0,
         "total_weight": 0,
