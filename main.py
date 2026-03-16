@@ -124,7 +124,7 @@ if st.session_state.page == 'welcome':
     if st.button("Enter the Library"):
         st.session_state.selected_category = selected
         st.session_state.page = 'library'
-    st.markdown("Made in a day by Felix O.. check out some of my other projects @iowanpalmcode <--- Github btw")
+    st.markdown("Made in a couple days by Felix O.. check out some of my other projects @iowanpalmcode <--- Github btw")
 elif st.session_state.page == 'library':
     st.title("📚 Digital Learning Library")
 
@@ -219,7 +219,7 @@ elif st.session_state.page == 'library':
                 st.divider()
 
     st.markdown("---")
-    st.write("This library is powered by AI to curate the best learning resources. Enjoy!")
+    st.write("This project is my first use real look into Claude! It's extremely competent if I do say so myself...")
 
 elif st.session_state.page == 'relax':
     st.title("🎣 Relax & Fish")
