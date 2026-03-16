@@ -6,14 +6,18 @@ import time
 
 from base_resources import base_resources
 from trivia_questions import questions
+from streamlit_local_storage import LocalStorage
+localS = LocalStorage()
 
 
 # Persist library state (bookshelf + tags) to disk so it survives restarts.
 STATE_PATH = os.path.join(os.path.dirname(__file__), "library_state.json")
 
 # Local persistence paths (per user, not synced)
-BOOKSHELF_PATH = os.path.join(os.path.expanduser("~"), ".library_bookshelf.json")
-FISHING_PATH = os.path.join(os.path.expanduser("~"), ".library_fishing.json")
+# BOOKSHELF_PATH = os.path.join(os.path.expanduser("~"), ".library_bookshelf.json")
+# FISHING_PATH = os.path.join(os.path.expanduser("~"), ".library_fishing.json")
+
+
 
 def _load_library_state():
     if os.path.exists(STATE_PATH):
@@ -34,57 +38,57 @@ def save_library_state():
     except Exception:
         pass
 
-def _load_bookshelf():
-    if os.path.exists(BOOKSHELF_PATH):
-        try:
-            with open(BOOKSHELF_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+#def _load_bookshelf():
+#    if os.path.exists(BOOKSHELF_PATH):
+#        try:
+#            with open(BOOKSHELF_PATH, "r", encoding="utf-8") as f:
+#                return json.load(f)
+#        except Exception:
+#            return []
+#    return []
 
 def save_bookshelf():
-    pass
+    localS.setItem("bookshelf", json.dumps(st.session_state.get("bookshelf", [])))
 
-def _load_fishing_stats():
-    if os.path.exists(FISHING_PATH):
-        try:
-            with open(FISHING_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {
-                "casts": 0,
-                "total_weight": 0,
-                "best_catches": [],
-                "achievements": [],
-                "achievement_log": [],
-                "notifications": [],
-                "skill_tree": {
-                    "unspent_points": 0,
-                    "Luck": 0,
-                    "Strength": 0,
-                    "Technique": 0,
-                    "Patience": 0,
-                },
-            }
-    return {
-        "casts": 0,
-        "total_weight": 0,
-        "best_catches": [],
-        "achievements": [],
-        "achievement_log": [],
-        "notifications": [],
-        "skill_tree": {
-            "unspent_points": 0,
-            "Luck": 0,
-            "Strength": 0,
-            "Technique": 0,
-            "Patience": 0,
-        },
-    }
+#def _load_fishing_stats():
+#    if os.path.exists(FISHING_PATH):
+#        try:
+#            with open(FISHING_PATH, "r", encoding="utf-8") as f:
+#                return json.load(f)
+#        except Exception:
+#            return {
+#                "casts": 0,
+#                "total_weight": 0,
+#                "best_catches": [],
+#                "achievements": [],
+#                "achievement_log": [],
+#                "notifications": [],
+#                "skill_tree": {
+#                    "unspent_points": 0,
+#                    "Luck": 0,
+#                    "Strength": 0,
+#                    "Technique": 0,
+#                    "Patience": 0,
+#                },
+#            }
+#    return {
+#        "casts": 0,
+#       "total_weight": 0,
+#        "best_catches": [],
+#        "achievements": [],
+#        "achievement_log": [],
+#        "notifications": [],
+#        "skill_tree": {
+#           "unspent_points": 0,
+#            "Luck": 0,
+#            "Strength": 0,
+#            "Technique": 0,
+#            "Patience": 0,
+#        },
+#    }
 
 def save_fishing_stats():
-    pass
+    localS.setItem("fishing_stats", json.dumps(st.session_state.get("fishing_stats", {})))
 
 # Ensure each major/category has at least 7 resources by adding filler links.
 # This keeps the library feeling full even when we have lots of categories.
@@ -109,6 +113,7 @@ resources = _augment_resources(base_resources)
 
 # Load saved state (bookshelf + tags) from disk
 _saved = _load_library_state()
+# Load
 
 # Initialize session state
 if 'page' not in st.session_state:
@@ -116,11 +121,13 @@ if 'page' not in st.session_state:
 if 'selected_category' not in st.session_state:
     st.session_state.selected_category = 'All'
 if 'bookshelf' not in st.session_state:
-    st.session_state.bookshelf = []
+    saved_bookshelf = localS.getItem("bookshelf")
+    st.session_state.bookshelf = json.loads(saved_bookshelf) if saved_bookshelf else []
 if 'resource_tags' not in st.session_state:
     st.session_state.resource_tags = _saved.get('resource_tags', {})
 if 'fishing_stats' not in st.session_state:
-    st.session_state.fishing_stats = {
+    saved_fishing = localS.getItem("fishing_stats")
+    st.session_state.fishing_stats = json.loads(saved_fishing) if saved_fishing else {
         "casts": 0,
         "total_weight": 0,
         "best_catches": [],
@@ -134,7 +141,7 @@ if 'fishing_stats' not in st.session_state:
             "Technique": 0,
             "Patience": 0,
         },
-    } 
+    }
 
 
 # Sidebar navigation
