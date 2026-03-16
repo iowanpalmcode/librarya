@@ -13,12 +13,6 @@ localS = LocalStorage()
 # Persist library state (bookshelf + tags) to disk so it survives restarts.
 STATE_PATH = os.path.join(os.path.dirname(__file__), "library_state.json")
 
-# Local persistence paths (per user, not synced)
-# BOOKSHELF_PATH = os.path.join(os.path.expanduser("~"), ".library_bookshelf.json")
-# FISHING_PATH = os.path.join(os.path.expanduser("~"), ".library_fishing.json")
-
-
-
 def _load_library_state():
     if os.path.exists(STATE_PATH):
         try:
@@ -38,54 +32,8 @@ def save_library_state():
     except Exception:
         pass
 
-#def _load_bookshelf():
-#    if os.path.exists(BOOKSHELF_PATH):
-#        try:
-#            with open(BOOKSHELF_PATH, "r", encoding="utf-8") as f:
-#                return json.load(f)
-#        except Exception:
-#            return []
-#    return []
-
 def save_bookshelf():
     localS.setItem("bookshelf", json.dumps(st.session_state.get("bookshelf", [])))
-
-#def _load_fishing_stats():
-#    if os.path.exists(FISHING_PATH):
-#        try:
-#            with open(FISHING_PATH, "r", encoding="utf-8") as f:
-#                return json.load(f)
-#        except Exception:
-#            return {
-#                "casts": 0,
-#                "total_weight": 0,
-#                "best_catches": [],
-#                "achievements": [],
-#                "achievement_log": [],
-#                "notifications": [],
-#                "skill_tree": {
-#                    "unspent_points": 0,
-#                    "Luck": 0,
-#                    "Strength": 0,
-#                    "Technique": 0,
-#                    "Patience": 0,
-#                },
-#            }
-#    return {
-#        "casts": 0,
-#       "total_weight": 0,
-#        "best_catches": [],
-#        "achievements": [],
-#        "achievement_log": [],
-#        "notifications": [],
-#        "skill_tree": {
-#           "unspent_points": 0,
-#            "Luck": 0,
-#            "Strength": 0,
-#            "Technique": 0,
-#            "Patience": 0,
-#        },
-#    }
 
 def save_fishing_stats():
     localS.setItem("fishing_stats", json.dumps(st.session_state.get("fishing_stats", {})))
@@ -109,7 +57,15 @@ def _augment_resources(base):
 
     return res
 
-resources = _augment_resources(base_resources)
+@st.cache_data
+def get_resources():
+    return _augment_resources(base_resources)
+
+@st.cache_data
+def get_categories():
+    return sorted(list(set(res['category'] for res in get_resources())))
+
+resources = get_resources()
 
 # Load saved state (bookshelf + tags) from disk
 _saved = _load_library_state()
@@ -122,21 +78,16 @@ if 'selected_category' not in st.session_state:
     st.session_state.selected_category = 'All'
 if 'bookshelf' not in st.session_state:
     saved_bookshelf = localS.getItem("bookshelf")
-    if saved_bookshelf:
-        st.session_state.bookshelf = json.loads(saved_bookshelf)
-    else:
-        st.session_state.bookshelf = []
+    st.session_state.bookshelf = json.loads(saved_bookshelf) if saved_bookshelf else []
+
 if 'resource_tags' not in st.session_state:
     st.session_state.resource_tags = _saved.get('resource_tags', {})
 if 'fishing_stats' not in st.session_state:
     saved_fishing = localS.getItem("fishing_stats")
-    if saved_fishing:
-        st.session_state.fishing_stats = json.loads(saved_fishing)
-    elif 'fishing_stats' not in st.session_state:
-        st.session_state.fishing_stats = {
-            "casts": 0,
-            "total_weight": 0,
-            "best_catches": [],
+    st.session_state.fishing_stats = json.loads(saved_fishing) if saved_fishing else {
+        "casts": 0,
+        "total_weight": 0,
+        "best_catches": [],
         "achievements": [],
         "achievement_log": [],
         "notifications": [],
@@ -167,7 +118,7 @@ if st.session_state.page == 'welcome':
     What category of books are you interested in today? Select a major or topic below, and I'll guide you to the library section.
     """)
     
-    categories = sorted(list(set(res['category'] for res in resources)))
+    categories = get_categories()
     selected = st.selectbox("Choose a category:", ["All"] + categories)
     
     if st.button("Enter the Library"):
@@ -183,7 +134,7 @@ elif st.session_state.page == 'library':
     search_query = st.text_input("Search for resources by title or category:", key="library_search")
 
     # Category filter (additional)
-    categories = sorted(list(set(res['category'] for res in resources)))
+    categories = get_categories()
     current_category = st.session_state.get('selected_category', 'All')
     if current_category not in categories and current_category != 'All':
         current_category = 'All'
@@ -215,7 +166,14 @@ elif st.session_state.page == 'library':
             res for res in filtered_resources
             if set(tag_filter).issubset(set(st.session_state.resource_tags.get(f"{res['category']}|{res['title']}", [])))
         ]
-
+    # Pages or whatever! go claude lets go
+    PAGE_SIZE = 12
+    total = len(filtered_resources)
+    total_pages = max(1, -(-total // PAGE_SIZE))  # ceiling division
+    page_num = st.number_input(f"Page (1–{total_pages})", min_value=1, max_value=total_pages, value=1, step=1)
+    start = (page_num - 1) * PAGE_SIZE
+    filtered_resources = filtered_resources[start:start + PAGE_SIZE]
+    st.write(f"Showing {start+1}–{min(start+PAGE_SIZE, total)} of {total} resources")
     # Display resources as "books"
     cols = st.columns(3)
     for i, res in enumerate(filtered_resources):
