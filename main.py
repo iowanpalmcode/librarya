@@ -122,15 +122,21 @@ if 'selected_category' not in st.session_state:
     st.session_state.selected_category = 'All'
 if 'bookshelf' not in st.session_state:
     saved_bookshelf = localS.getItem("bookshelf")
-    st.session_state.bookshelf = json.loads(saved_bookshelf) if saved_bookshelf else []
+    if saved_bookshelf:
+        st.session_state.bookshelf = json.loads(saved_bookshelf)
+    else:
+        st.session_state.bookshelf = []
 if 'resource_tags' not in st.session_state:
     st.session_state.resource_tags = _saved.get('resource_tags', {})
 if 'fishing_stats' not in st.session_state:
     saved_fishing = localS.getItem("fishing_stats")
-    st.session_state.fishing_stats = json.loads(saved_fishing) if saved_fishing else {
-        "casts": 0,
-        "total_weight": 0,
-        "best_catches": [],
+    if saved_fishing:
+        st.session_state.fishing_stats = json.loads(saved_fishing)
+    elif 'fishing_stats' not in st.session_state:
+        st.session_state.fishing_stats = {
+            "casts": 0,
+            "total_weight": 0,
+            "best_catches": [],
         "achievements": [],
         "achievement_log": [],
         "notifications": [],
